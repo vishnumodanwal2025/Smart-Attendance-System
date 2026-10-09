@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Smart Attendance System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #090d16;
+            --bg-card: rgba(15, 23, 42, 0.72);
+            --bg-card-hover: rgba(30, 41, 59, 0.8);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --border-focus: rgba(6, 182, 212, 0.5);
+            --primary: #06b6d4;
+            --primary-hover: #0891b2;
+            --primary-glow: rgba(6, 182, 212, 0.35);
+            --accent: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.35);
+            --success: #10b981;
+            --success-glow: rgba(16, 185, 129, 0.25);
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --danger-glow: rgba(239, 68, 68, 0.25);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-subtle: #64748b;
+            --radius-lg: 18px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: radial-gradient(circle at top center, #1e1b4b 0%, #090d16 55%, #05070c 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1080px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* --- Header Bar --- */
+        header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 24px;
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
+            gap: 16px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+
+        .brand-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            background: linear-gradient(90deg, #ffffff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .status-indicators {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 500;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-glass);
+            color: var(--text-muted);
+        }
+
+        .pill-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-subtle);
+        }
+
+        .pill.active .pill-dot {
+            background: var(--success);
+            box-shadow: 0 0 10px var(--success);
+        }
+
+        .pill.warning .pill-dot {
+            background: var(--warning);
+            box-shadow: 0 0 10px var(--warning);
+        }
+
+        .api-link {
+            text-decoration: none;
+            color: var(--primary);
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 999px;
+            border: 1px solid var(--primary-glow);
+            background: rgba(6, 182, 212, 0.08);
+            transition: all 0.2s ease;
+        }
+
+        .api-link:hover {
+            background: rgba(6, 182, 212, 0.2);
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        /* --- Navigation Tabs --- */
+        .tabs-nav {
+            display: flex;
+            gap: 8px;
+            padding: 6px;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-md);
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            flex: 1;
+            min-width: 140px;
+            padding: 10px 16px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .tab-btn.active {
+            color: #ffffff;
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(99, 102, 241, 0.25));
+            border: 1px solid var(--primary-glow);
+            box-shadow: 0 4px 15px rgba(6, 182, 212, 0.15);
+        }
+
+        /* --- Tab Panels --- */
+        .tab-panel {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* --- Check-In Grid Layout --- */
+        .checkin-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 860px) {
+            .checkin-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.25);
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* --- Form Elements --- */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 12px 14px;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-sm);
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+
+        /* --- GPS Radar Box --- */
+        .geo-box {
+            padding: 16px;
+            border-radius: var(--radius-md);
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid var(--border-glass);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .geo-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .geo-coords {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-muted);
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            font-family: monospace;
+        }
+
+        .geo-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .geo-toggle input {
+            width: auto;
+            cursor: pointer;
+        }
+
+        .distance-pill {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 600;
+            background: rgba(6, 182, 212, 0.1);
+            color: var(--primary);
+            border: 1px solid var(--primary-glow);
+        }
+
+        /* --- Camera Video Viewport --- */
+        .camera-viewport {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4/3;
+            background: #030712;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            border: 1px solid var(--border-glass);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+            /* Mirror view */
+        }
+
+        /* Biometric Scanning Overlay */
+        .scan-overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .reticle-box {
+            width: 200px;
+            height: 250px;
+            border: 2px dashed rgba(6, 182, 212, 0.5);
+            border-radius: 20px;
+            position: relative;
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.2);
+        }
+
+        .reticle-box::before,
+        .reticle-box::after {
+            content: '';
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            border-color: var(--primary);
+            border-style: solid;
+        }
+
+        .reticle-box::before {
+            top: -2px;
+            left: -2px;
+            border-width: 3px 0 0 3px;
+            border-top-left-radius: 18px;
+        }
+
+        .reticle-box::after {
+            bottom: -2px;
+            right: -2px;
+            border-width: 0 3px 3px 0;
+            border-bottom-right-radius: 18px;
+        }
+
+        .scan-line {
+            position: absolute;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            box-shadow: 0 0 12px var(--primary);
+            animation: sweep 2.5s infinite linear;
+        }
+
+        @keyframes sweep {
+            0% {
+                top: 10%;
+                opacity: 0;
+            }
+
+            15% {
+                opacity: 1;
+            }
+
+            85% {
+                opacity: 1;
+            }
+
+            100% {
+                top: 90%;
+                opacity: 0;
+            }
+        }
+
+        /* Primary Action Button */
+        .btn-primary {
+            width: 100%;
+            padding: 14px 20px;
+            border: none;
+            border-radius: var(--radius-sm);
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: #ffffff;
+            font-family: 'Outfit', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 20px var(--primary-glow);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 25px rgba(6, 182, 212, 0.45);
+        }
+
+        .btn-primary:active:not(:disabled) {
+            transform: translateY(1px);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            padding: 10px 16px;
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-sm);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* --- Result Feedback Display --- */
+        .result-panel {
+            padding: 18px;
+            border-radius: var(--radius-md);
+            display: none;
+            animation: fadeIn 0.3s ease;
+            border: 1px solid transparent;
+        }
+
+        .result-panel.success {
+            display: block;
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.3);
+            color: #34d399;
+        }
+
+        .result-panel.failed {
+            display: block;
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #f87171;
+        }
+
+        .result-panel.info {
+            display: block;
+            background: rgba(6, 182, 212, 0.1);
+            border-color: rgba(6, 182, 212, 0.3);
+            color: #38bdf8;
+        }
+
+        .result-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .score-bar-container {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .score-bar-bg {
+            width: 100%;
+            height: 8px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .score-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--accent), var(--primary));
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* --- Logs & History Table --- */
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-glass);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            text-align: left;
+        }
+
+        th {
+            background: rgba(15, 23, 42, 0.95);
+            padding: 12px 16px;
+            color: var(--text-muted);
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-glass);
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            color: var(--text-main);
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-present {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        /* --- Schedules Cards --- */
+        .schedule-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .schedule-card {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .schedule-card:hover {
+            border-color: var(--border-focus);
+            background: var(--bg-card-hover);
+        }
+
+        .schedule-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        /* --- Spinner --- */
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            display: inline-block;
+            animation: spin 0.7s linear infinite;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* --- Geofence Alert Banner --- */
+        .geo-alert-banner {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            background: rgba(239, 68, 68, 0.12);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-top: 12px;
+            animation: pulseAlert 2s ease-in-out infinite;
+        }
+
+        .geo-alert-banner.visible {
+            display: flex;
+        }
+
+        .geo-alert-icon {
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+
+        .geo-alert-text {
+            font-size: 12px;
+            color: #fca5a5;
+            line-height: 1.5;
+        }
+
+        .geo-alert-text strong {
+            display: block;
+            font-size: 13px;
+            color: #f87171;
+            margin-bottom: 2px;
+        }
+
+        @keyframes pulseAlert {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+            }
+
+            50% {
+                box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.1);
+            }
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            pointer-events: none;
+            filter: grayscale(0.4);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="brand">
+                <div class="brand-icon">🛡️</div>
+                <div>
+                    <h1 class="brand-title">AI Attendance & Geofence Radar</h1>
+                    <div class="brand-subtitle">Automated Computer Vision & Geolocation Verification</div>
+                </div>
+            </div>
+
+            <div class="status-indicators">
+                <div class="pill active" id="serverPill">
+                    <span class="pill-dot"></span>
+                    <span id="serverStatusText">Connecting...</span>
+                </div>
+                <div class="pill" id="cameraPill">
+                    <span class="pill-dot"></span>
+                    <span id="cameraStatusText">Camera Inactive</span>
+                </div>
+                <a href="/docs" target="_blank" class="api-link">API Swagger Docs ↗</a>
+            </div>
+        </header>
+
+        <!-- Tab Navigation -->
+        <nav class="tabs-nav">
+            <button class="tab-btn active" onclick="switchTab('checkin')">🎯 Live Check-In</button>
+            <button class="tab-btn" onclick="switchTab('enroll')">📸 Face Enrollment</button>
+            <button class="tab-btn" onclick="switchTab('history')">📋 Attendance Log</button>
+            <button class="tab-btn" onclick="switchTab('schedules')">🎓 Class Schedules</button>
+        </nav>
+
+        <!-- TAB 1: Live Check-In -->
+        <div id="tab-checkin" class="tab-panel active">
+            <div class="checkin-grid">
+                <!-- Left Column: Controls & Geofencing -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">1. Verification Setup</h2>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="studentSelect">Select Registered Student:</label>
+                        <select id="studentSelect" onchange="onStudentSelectChange()">
+                            <option value="">Loading students...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="customStudentIdGroup" style="display:none;">
+                        <label for="studentId">Custom Student ID:</label>
+                        <input type="number" id="studentId" value="1" placeholder="e.g. 1">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="scheduleSelect">Select Active Class Schedule:</label>
+                        <select id="scheduleSelect" onchange="updateSelectedSchedule()">
+                            <option value="1">Loading schedules...</option>
+                        </select>
+                    </div>
+
+                    <!-- Geolocation Card -->
+                    <div class="geo-box">
+                        <div class="geo-header">
+                            <span style="font-weight:600; font-size:13px; color:var(--text-main);">📍 Geofence
+                                Radar</span>
+                            <span id="geoStatusBadge" class="badge badge-present">Validating</span>
+                        </div>
+
+                        <label class="geo-toggle">
+                            <input type="checkbox" id="useDemoGps" checked onchange="toggleGpsMode()">
+                            <span>Use Campus Coordinates (Demo: 27.6465, 77.5519)</span>
+                        </label>
+
+                        <div class="geo-coords">
+                            <span>Lat: <strong id="currentLat">27.646560</strong></span>
+                            <span>Lng: <strong id="currentLng">77.551925</strong></span>
+                        </div>
+
+                        <div class="distance-pill" id="distancePill">
+                            <span>Distance to Class:</span>
+                            <strong id="distanceDisplay">Calculating...</strong>
+                        </div>
+
+                        <!-- Geofence Alert Banner: shown when out of campus range -->
+                        <div class="geo-alert-banner" id="geoAlertBanner">
+                            <div class="geo-alert-icon">🚫</div>
+                            <div class="geo-alert-text">
+                                <strong>Outside Campus Boundary</strong>
+                                You must be physically present on campus to mark attendance. Move within the allowed
+                                radius to enable check-in.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Verification Results Box -->
+                    <div id="resultPanel" class="result-panel">
+                        <div class="result-title" id="resultTitle">Result</div>
+                        <div id="resultMessage" style="font-size:13px; line-height:1.5;"></div>
+                        <div class="score-bar-container" id="scoreBarWrapper" style="display:none;">
+                            <div style="display:flex; justify-content:space-between; font-size:11px;">
+                                <span>Face Similarity Match</span>
+                                <strong id="scorePercent">0%</strong>
+                            </div>
+                            <div class="score-bar-bg">
+                                <div class="score-bar-fill" id="scoreBarFill"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Live Camera & Capture -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">2. Biometric Facial Scan</h2>
+                        <button type="button" class="btn-secondary" onclick="initCamera()">Restart Camera</button>
+                    </div>
+
+                    <div class="camera-viewport">
+                        <video id="video" autoplay playsinline muted></video>
+                        <div class="scan-overlay">
+                            <div class="reticle-box">
+                                <div class="scan-line"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="captureBtn" type="button" class="btn-primary" onclick="performCheckIn()">
+                        <span id="btnSpinner" class="spinner" style="display:none;"></span>
+                        <span id="btnText">📸 Capture Selfie & Verify Check-In</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: Face Enrollment -->
+        <div id="tab-enroll" class="tab-panel">
+            <div class="card" style="max-width: 600px; margin: 0 auto;">
+                <div class="card-header">
+                    <h2 class="card-title">👤 Register Face Baseline Photo</h2>
+                </div>
+                <p style="font-size:13px; color:var(--text-muted);">
+                    Upload or snap a clear reference photo for a student to enable AI face verification matching.
+                </p>
+
+                <div class="form-group">
+                    <label for="enrollStudentId">Student ID:</label>
+                    <input type="number" id="enrollStudentId" value="1" placeholder="e.g. 1">
+                </div>
+
+                <div class="form-group">
+                    <label for="enrollFile">Upload Reference Image (.jpg, .png):</label>
+                    <input type="file" id="enrollFile" accept="image/*">
+                </div>
+
+                <button type="button" class="btn-primary" onclick="uploadFaceReference()">
+                    Upload Face Reference
+                </button>
+
+                <div id="enrollResult" class="result-panel"></div>
+            </div>
+        </div>
+
+        <!-- TAB 3: Attendance History -->
+        <div id="tab-history" class="tab-panel">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">📋 Live Attendance Log</h2>
+                    <button class="btn-secondary" onclick="loadAttendanceHistory()">🔄 Refresh</button>
+                </div>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th># ID</th>
+                                <th>Student</th>
+                                <th>Course / Schedule</th>
+                                <th>Timestamp</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendanceTableBody">
+                            <tr>
+                                <td colspan="5" style="text-align:center; color:var(--text-muted); padding:24px;">
+                                    Loading attendance records...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: Class Schedules -->
+        <div id="tab-schedules" class="tab-panel">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">🎓 Registered Class Schedules</h2>
+                    <button class="btn-secondary" onclick="loadSchedules()">🔄 Refresh</button>
+                </div>
+                <div class="schedule-grid" id="schedulesContainer">
+                    <!-- Loaded dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="canvas" style="display:none;"></canvas>
+
+    <script>
+        const API_BASE = window.location.origin.includes("http") ? window.location.origin : "http://127.0.0.1:8000";
+        let availableSchedules = [];
+        let currentPosition = { lat: 25.1634082, lng: 82.5070414 };
+        let cameraStream = null;
+
+        // --- Tabs Navigation ---
+        function switchTab(tabKey) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+
+            const targetBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(tabKey));
+            if (targetBtn) targetBtn.classList.add('active');
+
+            const targetPanel = document.getElementById(`tab-${tabKey}`);
+            if (targetPanel) targetPanel.classList.add('active');
+
+            if (tabKey === 'history') loadAttendanceHistory();
+            if (tabKey === 'schedules') loadSchedules();
+        }
+
+        // --- Check Backend Health ---
+        async function checkServerHealth() {
+            const serverPill = document.getElementById('serverPill');
+            const serverStatusText = document.getElementById('serverStatusText');
+            try {
+                const res = await fetch(`${API_BASE}/api/health`);
+                if (res.ok) {
+                    serverPill.className = 'pill active';
+                    serverStatusText.innerText = 'Backend Online (Port 8000)';
+                } else {
+                    throw new Error();
+                }
+            } catch {
+                serverPill.className = 'pill warning';
+                serverStatusText.innerText = 'Backend Offline';
+            }
+        }
+
+        // --- Camera Setup ---
+        async function initCamera() {
+            const video = document.getElementById('video');
+            const cameraPill = document.getElementById('cameraPill');
+            const cameraStatusText = document.getElementById('cameraStatusText');
+
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+            }
+
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" }
+                });
+                video.srcObject = cameraStream;
+                cameraPill.className = 'pill active';
+                cameraStatusText.innerText = 'Camera Live';
+            } catch (err) {
+                console.warn("Camera init error:", err);
+                cameraPill.className = 'pill warning';
+                cameraStatusText.innerText = 'Camera Access Blocked';
+            }
+        }
+
+        // --- Geolocation Management ---
+        function toggleGpsMode() {
+            const useDemo = document.getElementById('useDemoGps').checked;
+            if (useDemo) {
+                currentPosition = { lat: 25.1634082, lng: 82.5070414 };
+                updateCoordsDisplay();
+            } else {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        pos => {
+                            currentPosition = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                            updateCoordsDisplay();
+                        },
+                        err => {
+                            alert("Could not fetch device GPS: " + err.message + ". Reverting to Demo coordinates.");
+                            document.getElementById('useDemoGps').checked = true;
+                            currentPosition = { lat: 25.1634082, lng: 82.5070414 };
+                            updateCoordsDisplay();
+                        }
+                    );
+                } else {
+                    alert("Geolocation is not supported by your browser.");
+                    document.getElementById('useDemoGps').checked = true;
+                }
+            }
+        }
+
+        function updateCoordsDisplay() {
+            document.getElementById('currentLat').innerText = currentPosition.lat.toFixed(6);
+            document.getElementById('currentLng').innerText = currentPosition.lng.toFixed(6);
+            recalculateDistance();
+        }
+
+        function calculateHaversine(lat1, lon1, lat2, lon2) {
+            const R = 6371000;
+            const toRad = x => (x * Math.PI) / 180;
+            const dLat = toRad(lat2 - lat1);
+            const dLon = toRad(lon2 - lon1);
+            const a = Math.sin(dLat / 2) ** 2 +
+                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        function recalculateDistance() {
+            const schedId = parseInt(document.getElementById('scheduleSelect').value);
+            const sched = availableSchedules.find(s => s.id === schedId);
+            const distDisplay = document.getElementById('distanceDisplay');
+            const badge = document.getElementById('geoStatusBadge');
+            const captureBtn = document.getElementById('captureBtn');
+            const btnText = document.getElementById('btnText');
+            const alertBanner = document.getElementById('geoAlertBanner');
+
+            if (!sched) {
+                distDisplay.innerText = "N/A";
+                return;
+            }
+
+            const dist = calculateHaversine(currentPosition.lat, currentPosition.lng, sched.lat, sched.lng);
+            const isOnCampus = dist <= sched.allowed_radius_m;
+
+            distDisplay.innerText = `${dist.toFixed(1)} m (Limit: ${sched.allowed_radius_m}m)`;
+
+            if (isOnCampus) {
+                // ✅ Within geofence — unlock check-in
+                badge.className = 'badge badge-present';
+                badge.style.background = '';
+                badge.style.color = '';
+                badge.innerText = '✅ Within Campus';
+                captureBtn.disabled = false;
+                btnText.innerText = '📸 Capture Selfie & Verify Check-In';
+                alertBanner.classList.remove('visible');
+            } else {
+                // ❌ Outside geofence — block check-in
+                badge.className = 'badge';
+                badge.style.background = 'rgba(239, 68, 68, 0.2)';
+                badge.style.color = '#f87171';
+                badge.innerText = `❌ ${dist.toFixed(0)}m Away`;
+                captureBtn.disabled = true;
+                btnText.innerText = `🚫 Outside Campus (${dist.toFixed(0)}m away)`;
+                alertBanner.classList.add('visible');
+            }
+        }
+
+        // --- Load Students from API ---
+        async function loadStudents() {
+            const select = document.getElementById('studentSelect');
+            try {
+                const res = await fetch(`${API_BASE}/users`);
+                const users = await res.json();
+                const students = users.filter(u => u.role === 'student');
+
+                select.innerHTML = '';
+                if (students.length === 0) {
+                    select.innerHTML = '<option value="custom">-- Enter Custom Student ID --</option>';
+                } else {
+                    students.forEach(u => {
+                        const opt = document.createElement('option');
+                        opt.value = u.id;
+                        const faceTag = u.has_face_encoding ? '📷' : '⚠️';
+                        opt.innerText = `${faceTag} ${u.name} (ID: ${u.id})`;
+                        select.appendChild(opt);
+                    });
+                    const customOpt = document.createElement('option');
+                    customOpt.value = 'custom';
+                    customOpt.innerText = '-- Enter Custom Student ID --';
+                    select.appendChild(customOpt);
+                }
+                onStudentSelectChange();
+            } catch (err) {
+                console.warn('Could not load students from API:', err);
+                select.innerHTML = '<option value="1">Student ID: 1 (fallback)</option><option value="custom">-- Enter Custom Student ID --</option>';
+            }
+        }
+
+        // --- Load Schedules ---
+        async function loadSchedules() {
+            const select = document.getElementById('scheduleSelect');
+            const container = document.getElementById('schedulesContainer');
+
+            try {
+                const res = await fetch(`${API_BASE}/schedules`);
+                const data = await res.json();
+                availableSchedules = data;
+
+                select.innerHTML = '';
+                if (data.length === 0) {
+                    select.innerHTML = '<option value="">No schedules available</option>';
+                    if (container) container.innerHTML = '<p style="color:var(--text-muted);">No active schedules found.</p>';
+                    return;
+                }
+
+                data.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.id;
+                    opt.innerText = `${s.course_name} (Radius: ${s.allowed_radius_m}m)`;
+                    select.appendChild(opt);
+                });
+
+                if (container) {
+                    container.innerHTML = data.map(s => `
+                        <div class="schedule-card">
+                            <div class="schedule-title">${s.course_name}</div>
+                            <div style="font-size:12px; color:var(--text-muted);">
+                                <div><strong>ID:</strong> ${s.id}</div>
+                                <div><strong>Coordinates:</strong> ${s.lat.toFixed(4)}, ${s.lng.toFixed(4)}</div>
+                                <div><strong>Allowed Radius:</strong> ${s.allowed_radius_m} meters</div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+
+                recalculateDistance();
+            } catch (err) {
+                console.error("Error loading schedules:", err);
+            }
+        }
+
+        function updateSelectedSchedule() {
+            recalculateDistance();
+        }
+
+        function onStudentSelectChange() {
+            const select = document.getElementById('studentSelect');
+            const customGroup = document.getElementById('customStudentIdGroup');
+            if (select.value === 'custom') {
+                customGroup.style.display = 'flex';
+            } else {
+                customGroup.style.display = 'none';
+                document.getElementById('studentId').value = select.value;
+            }
+        }
+
+        // --- Perform Unified Check-In ---
+        async function performCheckIn() {
+            const btn = document.getElementById('captureBtn');
+            const btnSpinner = document.getElementById('btnSpinner');
+            const btnText = document.getElementById('btnText');
+            const resultPanel = document.getElementById('resultPanel');
+            const resultTitle = document.getElementById('resultTitle');
+            const resultMessage = document.getElementById('resultMessage');
+            const scoreBarWrapper = document.getElementById('scoreBarWrapper');
+            const scoreBarFill = document.getElementById('scoreBarFill');
+            const scorePercent = document.getElementById('scorePercent');
+
+            const studentSelect = document.getElementById('studentSelect');
+            const studentId = studentSelect.value === 'custom' ? document.getElementById('studentId').value : studentSelect.value;
+            const scheduleId = document.getElementById('scheduleSelect').value;
+
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+
+            // Capture Frame from Video
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            btn.disabled = true;
+            btnSpinner.style.display = 'inline-block';
+            btnText.innerText = 'Verifying Biometrics & Geofence...';
+
+            canvas.toBlob(async (blob) => {
+                const formData = new FormData();
+                formData.append('file', blob, 'selfie.jpg');
+
+                try {
+                    const url = `${API_BASE}/attendance/unified-check-in?student_id=${studentId}&schedule_id=${scheduleId}&lat=${currentPosition.lat}&lng=${currentPosition.lng}`;
+                    const res = await fetch(url, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const data = await res.json();
+
+                    if (data.status === 'success') {
+                        resultPanel.className = 'result-panel success';
+                        resultTitle.innerHTML = '✅ Verification Succeeded!';
+                        resultMessage.innerHTML = `<strong>${data.message}</strong><br>Distance: ${data.distance_meters}m | Similarity: ${data.similarity_score}`;
+
+                        if (data.similarity_score !== undefined) {
+                            scoreBarWrapper.style.display = 'flex';
+                            const pct = Math.min(100, Math.round(data.similarity_score * 100));
+                            scorePercent.innerText = `${pct}%`;
+                            scoreBarFill.style.width = `${pct}%`;
+                        }
+                    } else {
+                        resultPanel.className = 'result-panel failed';
+                        resultTitle.innerHTML = '❌ Check-In Failed';
+                        resultMessage.innerText = data.message || "Face or Geofencing validation failed.";
+                        scoreBarWrapper.style.display = 'none';
+                    }
+                } catch (err) {
+                    resultPanel.className = 'result-panel failed';
+                    resultTitle.innerHTML = '⚠️ Network / Server Error';
+                    resultMessage.innerText = err.message;
+                    scoreBarWrapper.style.display = 'none';
+                } finally {
+                    btn.disabled = false;
+                    btnSpinner.style.display = 'none';
+                    btnText.innerText = '📸 Capture Selfie & Verify Check-In';
+                }
+            }, 'image/jpeg', 0.9);
+        }
+
+        // --- Face Enrollment Upload ---
+        async function uploadFaceReference() {
+            const studentId = document.getElementById('enrollStudentId').value;
+            const fileInput = document.getElementById('enrollFile');
+            const resultBox = document.getElementById('enrollResult');
+
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert("Please select an image file first.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                const res = await fetch(`${API_BASE}/users/${studentId}/upload-face`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    resultBox.className = 'result-panel success';
+                    resultBox.innerHTML = `<strong>Success:</strong> ${data.message}`;
+                } else {
+                    resultBox.className = 'result-panel failed';
+                    resultBox.innerHTML = `<strong>Error:</strong> ${data.message}`;
+                }
+            } catch (err) {
+                resultBox.className = 'result-panel failed';
+                resultBox.innerHTML = `<strong>Failed:</strong> ${err.message}`;
+            }
+        }
+
+        // --- Load Attendance History ---
+        async function loadAttendanceHistory() {
+            const tbody = document.getElementById('attendanceTableBody');
+            try {
+                const res = await fetch(`${API_BASE}/attendance`);
+                const data = await res.json();
+
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:24px;">No attendance records found yet. Perform a check-in to see live logs!</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = data.map(row => `
+                    <tr>
+                        <td>#${row.id}</td>
+                        <td><strong>${row.student_name}</strong> (ID: ${row.student_id})</td>
+                        <td>${row.course_name}</td>
+                        <td style="color:var(--text-muted);">${row.timestamp || 'Just now'}</td>
+                        <td><span class="badge badge-present">${row.status}</span></td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#f87171; padding:24px;">Failed to fetch records: ${err.message}</td></tr>`;
+            }
+        }
+
+        // --- Startup Initialization ---
+        window.addEventListener('DOMContentLoaded', () => {
+            checkServerHealth();
+            initCamera();
+            loadStudents();
+            loadSchedules();
+            loadAttendanceHistory();
+            toggleGpsMode();
+            setInterval(checkServerHealth, 15000);
+        });
+    </script>
+</body>
+
+</html>
