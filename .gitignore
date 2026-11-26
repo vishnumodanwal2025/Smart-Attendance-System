@@ -49,3 +49,6 @@ Thumbs.db
 
 # Node modules (if any)
 node_modules/
+
+# Student face reference uploads are private biometric data
+backend/app/static/faces/

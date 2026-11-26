@@ -1,0 +1,495 @@
+PROJECT DETAILS: GL BAJAJ COLLEGE ATTENDANCE AI SYSTEM
+========================================================
+
+Document purpose
+----------------
+This file is a project handoff document for another AI or report writer. It
+describes the implemented project, its technology stack, functionality,
+architecture, data model, user workflows, API endpoints, setup requirements,
+and current limitations.
+
+
+1. PROJECT OVERVIEW
+-------------------
+Project name:
+    GL Bajaj College Attendance AI System
+
+Project type:
+    Full-stack web application for college/class attendance management.
+
+Main objective:
+    Allow students to mark attendance using live face verification and campus
+    location validation, while allowing faculty to control attendance sessions,
+    enroll student face references, view schedules, and audit attendance logs.
+
+Target environment:
+    GL Bajaj Group of Institutions, Mathura
+    Department: CSE-AIML & CS
+    Section: H
+    Semester context: Odd Semester 2026-27
+
+Core problem solved:
+    Traditional attendance can be slow and vulnerable to proxy attendance.
+    This system combines:
+      1. User authentication and role-based screens
+      2. Faculty-controlled attendance sessions
+      3. GPS/geofence validation
+      4. Camera-based face detection and face matching
+      5. Duplicate check-in prevention
+      6. Attendance history and timetable views
+
+
+2. TECHNOLOGY STACK
+-------------------
+
+Frontend:
+    - React 19
+    - React DOM 19
+    - Vite 8 development server and build tool
+    - JavaScript/JSX (not TypeScript)
+    - lucide-react for interface icons
+    - Plain CSS files for styling and responsive UI
+    - Oxlint for frontend linting
+    - Browser APIs:
+        * MediaDevices getUserMedia() for camera access
+        * Geolocation API for the user's current coordinates
+        * localStorage for restoring the logged-in UI session
+        * Fetch API for backend communication
+
+Backend:
+    - Python
+    - FastAPI web framework
+    - Uvicorn-compatible ASGI application
+    - Pydantic schemas and validation
+    - SQLAlchemy ORM
+    - SQLite by default
+    - Optional PostgreSQL or other SQLAlchemy database through DATABASE_URL
+    - python-jose for JWT token creation
+    - passlib with bcrypt for password hashing
+    - OpenCV (cv2) for computer vision
+    - NumPy for image processing support
+    - python-multipart functionality through FastAPI file uploads
+
+Face AI:
+    - YuNet ONNX model for face detection
+    - SFace ONNX model for face feature extraction and recognition
+    - OpenCV FaceDetectorYN and FaceRecognizerSF APIs
+    - Facial alignment using detected facial landmarks
+    - 128-dimensional face feature embeddings
+    - Cosine similarity comparison
+    - Matching threshold currently set around 0.36 cosine similarity
+
+Database:
+    - Local SQLite database files named attendance.db
+    - SQLAlchemy models create the required tables automatically
+    - Database can be changed through the DATABASE_URL environment variable
+
+
+3. PROJECT STRUCTURE
+--------------------
+
+attendance-system/
+    frontend/
+        package.json
+        index.html
+        vite.config.js
+        src/
+            App.jsx
+            App.css
+            index.css
+            main.jsx
+            constants/scheduleData.js
+            components/
+                AuthOverlay.jsx
+                Topbar.jsx
+                TabNav.jsx
+                LiveCheckinPanel.jsx
+                ManageSessionsPanel.jsx
+                FaceEnrollmentPanel.jsx
+                TimetablePanel.jsx
+                AttendanceLogsPanel.jsx
+                Toast.jsx
+
+    backend/
+        app/
+            main.py
+            auth.py
+            database.py
+            models.py
+            schemas.py
+            static/faces/
+        attendance.db
+        yunet.onnx
+        yunet_face.onnx
+        sface.onnx
+        sface.onnx
+        seed_schedules.py
+        migrate.py
+        test_noface_checkin.py
+
+    attendance.db
+    build_full_frontend.py
+    update_frontend_checkin_feedback.py
+    update_timetable_mod.py
+
+The backend can serve the built frontend index file and frontend assets when a
+frontend build exists. During development, the frontend normally runs through
+Vite and calls the backend at http://127.0.0.1:8000.
+
+
+4. USER ROLES
+-------------
+
+Student:
+    - Sign in or register as a student
+    - See currently active attendance sessions
+    - Select an active class or lab
+    - Allow camera and location access
+    - Submit a live selfie for biometric verification
+    - Mark attendance only when inside the allowed geofence
+    - View timetable and attendance history
+
+Professor/faculty:
+    - Sign in or register as faculty
+    - Open attendance for a selected class or lab
+    - Close an attendance session
+    - View active and historical attendance sessions
+    - Enroll a student's reference face photo using file upload or live camera
+    - Perform a direct check-in verification for an enrolled student
+    - View attendance records and timetable
+
+Role-based UI behavior:
+    - Faculty-only session management and face enrollment tabs are hidden from
+      students.
+    - The frontend applies role CSS classes to the document body.
+    - The backend stores the role as either student or professor.
+
+
+5. MAIN FUNCTIONAL FEATURES
+---------------------------
+
+5.1 Authentication and registration
+    - Student and faculty sign-in forms are provided.
+    - Registration collects name, email, password, role, and student-specific
+      enrollment number, section, and group.
+    - Passwords are hashed with bcrypt before storage.
+    - JWT helper functions exist in backend/app/auth.py.
+    - The frontend stores the current user in localStorage for UI restoration.
+    - The project also contains local/session demo fallback behavior in the
+      frontend when the backend is unavailable. This is useful for demos but
+      should be disabled for production authentication.
+
+5.2 Faculty attendance session management
+    - Faculty opens attendance for a specific schedule.
+    - An active session is stored in attendance_sessions.
+    - Students see only currently open sessions.
+    - Faculty closes the session after class.
+    - Session history records who opened it, when it opened, when it closed,
+      and whether it is still active.
+
+5.3 Face enrollment
+    - Faculty selects a student.
+    - A reference face can be uploaded as an image or captured through the
+      browser camera.
+    - The backend saves the image in backend/app/static/faces/.
+    - OpenCV checks that the uploaded reference image contains a face.
+    - The stored database value is the reference image path.
+
+5.4 Face verification
+    - The browser captures a live camera frame.
+    - YuNet detects the face in the live frame and reference image.
+    - The system rejects frames with no detected face.
+    - Multiple faces are rejected by the verification logic.
+    - Both faces are aligned using facial landmarks.
+    - SFace extracts feature vectors and compares them with cosine similarity.
+    - The result includes verification status, face-detected status, and a
+      similarity score for the UI.
+
+5.5 Geofencing
+    - Each schedule stores latitude, longitude, and allowed radius in meters.
+    - The backend calculates distance using the Haversine formula.
+    - Attendance is rejected when the user is outside the configured radius.
+    - The frontend also contains campus coordinates and a Haversine helper.
+    - The configured timetable entries generally use the GL Bajaj campus
+      coordinates 27.646560, 77.551925 and a 100-meter radius.
+
+5.6 Unified attendance check-in
+    - The unified check-in endpoint combines all important checks:
+        * student exists
+        * face baseline exists
+        * schedule exists
+        * location is within the allowed radius
+        * attendance is not already marked for that student and schedule on
+          the same UTC day
+        * uploaded live image is readable
+        * live face matches the enrolled face
+    - Only after all checks pass is a Present attendance record created.
+
+5.7 Timetable and course information
+    - The UI includes six theory courses and four lab sessions.
+    - Users can filter all classes, theory courses, or lab sessions.
+    - A weekly matrix view shows Monday-Friday class periods, breaks, lunch,
+      rooms, faculty, and lab groups.
+    - Course records include course code/name, type, faculty, room/lab,
+      target group, time slots, coordinates, and geofence radius.
+
+5.8 Attendance logs
+    - Attendance records show log ID, student, course/lab, timestamp, and
+      status.
+    - The UI supports search by student or course.
+    - The UI supports Present/Absent status filtering.
+    - Logs are loaded from the backend and sorted newest first.
+
+5.9 Health monitoring and frontend polling
+    - The frontend checks /api/health periodically.
+    - Backend availability is shown in the top navigation area.
+    - Active sessions are polled periodically for students so newly opened
+      attendance sessions appear without a full page refresh.
+
+
+6. DATABASE DESIGN
+------------------
+
+users:
+    - id
+    - name
+    - email
+    - hashed_password
+    - role
+    - face_encoding (reference image path)
+    - enrollment_no
+    - section
+    - group
+
+schedules:
+    - id
+    - course_name
+    - prof_id
+    - lat
+    - lng
+    - allowed_radius_m
+    - full_name
+    - course_type (theory or lab)
+    - room_or_lab
+    - faculty_name
+    - target_group
+    - time_slot
+
+attendance:
+    - id
+    - student_id
+    - schedule_id
+    - timestamp
+    - status
+
+attendance_sessions:
+    - id
+    - schedule_id
+    - opened_by
+    - opened_at
+    - closed_at
+    - is_active
+
+Relationships:
+    - Schedule.prof_id references users.id.
+    - Attendance.student_id references users.id.
+    - Attendance.schedule_id references schedules.id.
+    - AttendanceSession.schedule_id references schedules.id.
+    - AttendanceSession.opened_by references users.id.
+
+
+7. IMPORTANT API ENDPOINTS
+--------------------------
+
+GET  /api/health
+    Backend health check.
+
+POST /register
+    Register a student or professor.
+
+POST /auth/login
+    JSON-based login used by the React frontend.
+
+POST /login
+    OAuth2 form-style login endpoint for token-based clients.
+
+GET  /users
+    Return users and whether each user has a face baseline.
+
+POST /users/{user_id}/upload-face
+    Upload and validate a student's reference face image.
+
+GET  /schedules
+    Return all schedules.
+
+POST /schedules
+    Create a schedule.
+
+POST /sessions/open?schedule_id={id}&prof_id={id}
+    Open an attendance session.
+
+POST /sessions/close?schedule_id={id}
+    Close an attendance session.
+
+GET  /sessions/active
+    Return currently open sessions.
+
+GET  /sessions/history
+    Return session history.
+
+POST /attendance/check-in
+    Basic location-validated attendance endpoint.
+
+POST /attendance/verify-face/{user_id}
+    Verify an uploaded face image against a student's baseline.
+
+POST /attendance/unified-check-in
+    Main multipart check-in endpoint combining location and face verification.
+    Query parameters include student_id, schedule_id, lat, and lng. The image
+    is uploaded as a multipart file.
+
+GET  /attendance
+    Return attendance records with student and course information.
+
+
+8. TYPICAL END-TO-END WORKFLOWS
+-------------------------------
+
+Student check-in:
+    1. Student signs in.
+    2. Frontend loads schedules, users, active sessions, and attendance logs.
+    3. Student selects an active class or lab.
+    4. Browser obtains current location and camera permission.
+    5. Student positions their face in the camera frame.
+    6. Frontend sends location, schedule, student ID, and image to the backend.
+    7. Backend validates the session-related schedule, geofence, duplicate
+       status, and face match.
+    8. Backend creates a Present attendance record after successful validation.
+    9. Frontend shows the match score, distance, and success/failure message.
+
+Faculty setup:
+    1. Professor signs in.
+    2. Professor opens Face Enrollment.
+    3. Professor selects a student and uploads or captures a clear face image.
+    4. Backend validates the image and stores the face reference path.
+    5. Professor opens attendance for a class or lab.
+    6. Students can now see the session and perform check-in.
+    7. Professor closes the session after the class.
+
+
+9. RUNNING THE PROJECT
+----------------------
+
+Frontend development:
+    cd attendance-system/frontend
+    npm install
+    npm run dev
+
+Frontend production build:
+    cd attendance-system/frontend
+    npm run build
+
+Frontend lint:
+    cd attendance-system/frontend
+    npm run lint
+
+Backend development:
+    The backend requires Python and the packages imported by the application,
+    including FastAPI, Uvicorn, SQLAlchemy, Pydantic, python-jose, passlib
+    with bcrypt, OpenCV, NumPy, and multipart upload support.
+
+    Run the FastAPI application from the attendance-system directory with an
+    ASGI server, for example:
+        uvicorn backend.app.main:app --reload --port 8000
+
+    The frontend currently expects the API at:
+        http://127.0.0.1:8000
+
+Database configuration:
+    - Default: SQLite at sqlite:///./attendance.db.
+    - Optional: set DATABASE_URL to a SQLAlchemy-compatible remote database URL.
+    - Tables are created automatically when the backend module initializes.
+    - Startup code seeds demonstration users and schedules when the database
+      is empty or has too few schedules.
+
+Model files:
+    - backend/app/sface.onnx
+    - backend/app/yunet_face.onnx
+    - backend/sface.onnx
+    - backend/yunet_face.onnx
+    The exact model path used by the active backend is defined in
+    backend/app/main.py. The model files must be present for face AI to work.
+
+
+10. CURRENT IMPLEMENTATION NOTES AND LIMITATIONS
+-------------------------------------------------
+
+These are important for a project report and for future development:
+
+1. This is a working academic/demo project, not yet a production deployment.
+
+2. CORS currently allows all origins for local testing. Production should
+   restrict allowed origins.
+
+3. The JWT secret is currently defined in source code for development.
+   Production should load it from a secure environment variable or secret
+   manager and rotate it when necessary.
+
+4. Some backend routes use default or query-string user IDs rather than a
+   complete dependency-based authorization system. A production version
+   should validate the authenticated user and enforce faculty/student
+   permissions on every protected endpoint.
+
+5. The frontend contains offline/session fallback login behavior. This can
+   allow a demo login when the API is unavailable and should be removed or
+   strictly feature-flagged in a real attendance system.
+
+6. Face reference images are stored on local disk. A production deployment
+   should protect these files, define retention and deletion policies, and
+   consider encrypted storage and privacy/consent requirements.
+
+7. The frontend has a hard-coded local API URL. A deployment should use an
+   environment-based API URL.
+
+8. Backend dependencies are listed in backend/requirements.txt. Review and
+   update the pinned versions as part of routine maintenance.
+
+9. Browser camera and geolocation permissions are required for real student
+   check-in. HTTPS is normally required by browsers outside localhost.
+
+10. Geofence coordinates and timetable data are seeded/static demo data and
+    should be managed through an administrative configuration workflow for
+    real campus use.
+
+11. The check-in logic prevents duplicate attendance for the same student,
+    schedule, and UTC date. Time zone policy should be made explicit for
+    production reporting.
+
+12. The system should receive security, biometric privacy, accessibility,
+    load, and integration testing before institutional deployment.
+
+
+11. REPORT-WRITING SUMMARY
+--------------------------
+
+Suggested one-paragraph description:
+
+    The GL Bajaj College Attendance AI System is a full-stack React and
+    FastAPI web application that automates classroom attendance using
+    computer-vision-based face verification and GPS geofencing. Students can
+    check in only when a faculty member has opened the relevant class session,
+    the student is within the configured campus radius, and the live camera
+    image matches the student's enrolled face baseline. Faculty members can
+    register face references, open and close attendance sessions, inspect
+    session history, manage class information, and review searchable attendance
+    logs. The backend uses SQLAlchemy with SQLite by default, while OpenCV
+    YuNet and SFace ONNX models provide face detection and recognition.
+
+Suggested project keywords:
+    Attendance automation, facial recognition, biometric verification,
+    geofencing, GPS validation, React, FastAPI, Python, OpenCV, YuNet, SFace,
+    ONNX, SQLite, SQLAlchemy, JWT authentication, role-based access, timetable,
+    academic management system, real-time attendance, anti-proxy attendance.
+
+
+END OF PROJECT DETAILS
